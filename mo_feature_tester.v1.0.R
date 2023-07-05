@@ -1,5 +1,3 @@
-
-library(topGO)
 library(tidyverse)
 ##############################################################
 PROJECT <- "_on_SolaITAG4_ch01_0e3-cwm"
