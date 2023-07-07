@@ -43,6 +43,7 @@ output          - get motif patterns      - get motif meta-data      |
                                                 - interpret model predictions
                                                 - gene annotation
                                                 - module generation
+                                                - get bed files for visualisation in JBROWSE
 
 
 
