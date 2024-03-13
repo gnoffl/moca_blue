@@ -80,7 +80,7 @@ mv ./blamm_meV1.0.sh ../blamm-master/build/blamm_meV1.0.sh
 ./blamm-master/build/blamm_meV1.0.sh  
 cp ./blamm-master/build/outPROJECT ./moca_blue/mo_proj/outPROJECT  
 
-#Analyze and Visualize the EPM search results   ############################################  
+# Analyze and Visualize the EPM search results   ############################################  
 mo_proj -------------------------  
 After searching for motif matches within a reference sequence, these results can be tested and further characterized using the occ_filter, mo_feat-filter, mo_feature_tester and mo_predictability scripts.  
 #When the occurence files are to large please use the split_files.sh to split them #########  
