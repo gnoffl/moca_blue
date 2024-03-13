@@ -7,6 +7,7 @@ RStudio
 
 This is a tool-box for the analyses of DNA motifs
 that have been derived from deep-learning model features extraction software 'deepCRE'.
+https://github.com/NAMlab/DeepCRE
 moca_blue is currently in development.
 
 ################## ---------- Workflow example -------- ###################################
