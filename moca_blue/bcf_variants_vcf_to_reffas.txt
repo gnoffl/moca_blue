@@ -1,0 +1,6 @@
+
+bcftools sort AthAly.genome.snp3.vcf -o AthAly.genome.snp3.sorted.vcf
+bgzip AthAly.genome.snp3.sorted.vcf
+tabix -p vcf AthAly.genome.snp3.sorted.vcf.gz
+
+bcftools consensus -f ./../../ref_seq/Arabidopsis_thaliana.TAIR10.dna.toplevel.fa AthAly.genome.snp3.sorted.vcf.gz > Atha-ref_Alyr-mod.fa
