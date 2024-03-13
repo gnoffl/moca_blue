@@ -1,7 +1,5 @@
 # moca_blue
 [2024-03-13]
-
-MOCA-BLU
 Welcome the the moca_blue suite!
 from Simon M. Zumkeller
 RStudio
@@ -21,7 +19,7 @@ mkdir 0MOTIFS mo_nom mo_range mo_proj mo_clu ref_seq ..
 #Results will be stored in the out directories 
 mkdir 0MOTIFS mo_nom/out mo_range/out mo_proj/out ..
 
-#Assign nomenclature and extract EPMs for into jaspar file format     ######################
+# Assign nomenclature and extract EPMs for into jaspar file format     ######################
 mo_nom
 Extract motifs from TF-MoDisco hdf5 files, assigns nomenclature and produces weblogos.
 Currently, there are three versions of the same script that can be used for the extraction of a given format of weight matrix.
@@ -34,7 +32,7 @@ CWM - contribution weight matrix (best for mapping)
 #Compare EPMs to JASPAR2020 database
 ./mo_nom/mo_compare_JASPAR2020_v1.0.R
 
-#Compare EPMs to themselves, other files in jaspar format or JASPAR2020 database        ####
+# Compare EPMs to themselves, other files in jaspar format or JASPAR2020 database        ####
 mo_clu 
 
 Analyse and Edit motif-files stored in jaspar-format here. Results should be stored in the "out" directory.
@@ -46,14 +44,14 @@ Generates dendrograms/trees based on similarity-matrix for EPMs and Visual.
 #Visualize EPM clustering results
 ./mo_clu/mo_tree_viz.SZ.v1.0.R
 
-#Extract saliency maps and importace scores      ###########################################
+# Extract saliency maps and importace scores      ###########################################
 ./mo_imp/rdf5_get_epm_contrib_scores.v1.1.R
 ./mo_imp/mo_imp_scores.v1.1.R
 
 #Visualize saliency maps and importace scores (in development)
 ./mo_imp/mo_imp_depth_v0.7.R
 
-#Extract seqlet occurring ranges, positional preferences of EPMs        ####################
+# Extract seqlet occurring ranges, positional preferences of EPMs        ####################
 mo_range ------------------------
 
 Motifs/ EPMs are not distributed at random in a genome.
@@ -73,10 +71,10 @@ mo_nom/rdf5_get_cwms_per_pattern.v1.0.R
 ./mo_range/rdf5_get_seql_patternV2.1.R
 ./mo_range/meta_motif_ranges_characteristics_TSS-TTS.1.4.R
 
-#Map motifs.jaspar to reference genome using BLAMM (https://github.com/biointec/blamm) #####
+# Map motifs.jaspar to reference genome using BLAMM (https://github.com/biointec/blamm) #####
 #Follow BLAMM installation guide 
 mv ./blamm_meV1.0.sh ../blamm-master/build/blamm_meV1.0.sh
-# Edit sequences.mf file to specify target file for EPM search; e.g. ./ref_seq/file.fas
+#Edit sequences.mf file to specify target file for EPM search; e.g. ./ref_seq/file.fas
 ./blamm-master/build/blamm_meV1.0.sh
 cp ./blamm-master/build/outPROJECT ./moca_blue/mo_proj/outPROJECT
 
