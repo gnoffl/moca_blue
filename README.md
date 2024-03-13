@@ -20,7 +20,7 @@ mkdir 0MOTIFS mo_nom mo_range mo_proj mo_clu ref_seq ..
 #Results will be stored in the out directories   
 mkdir 0MOTIFS mo_nom/out mo_range/out mo_proj/out ..  
 
-# Assign nomenclature and extract EPMs for into jaspar file format     ######################  
+# Assign nomenclature and extract EPMs  into jaspar file format     #######################  
 mo_nom
 Extract motifs from TF-MoDisco hdf5 files, assigns nomenclature and produces weblogos.  
 Currently, there are three versions of the same script that can be used for the extraction  
