@@ -20,13 +20,13 @@
 # It contains which motifs matched what gene region
 # All files need to imported into R and combined
 # The goal of this script is to characterize genes that have identified motifs in their flanking regions
-#setwd("/home/ibg-4/Desktop/Rhome/solanum_motifs")
+setwd("/home/ibg-4/Desktop/Rhome/moca_blue/mo_proj/")
 #gff annotations might be edited eg. sed -i 's/ID=gene:[^A]*AT/ID=gene:AT/g' path/to/file
 ##############################################################
-PROJECT <- "SolyM014sols_e3-cwm_W2"
-SPEC <- "Soly"
-MODEL <- "M0"
-DATE <- "20231116"
+PROJECT <- "ZemaS0_genZemaB73p0e-4_2024h"
+SPEC <- "Zema"
+MODEL <- "S0"
+DATE <- "2024H"
 ##############################################################
 weight_region   <- "yes"   # choose between "yes" or "no". If you write yes, an additional filter will be applied to occurences
 word_size <- 14  # This is not a real wordsize like in BLAST but it works similar. All matches smaller than this size will be removed.
@@ -35,11 +35,11 @@ dirpath_1 <- "./../ref_seq"
 dirpath_2 <- "./out"
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #   #   #   #   #  #  #   #   #   #  #  #  #  #  #  #  #  #
-file4 <- "SolyM014sols_e3-cwm_2023110"    #   These are the filtered results of the the BLAMM output occurence.txt
+file4 <- "result_ZemaS0_genZemaB73p0e-4_2024h"    #   These are the filtered results of the the BLAMM output occurence.txt
 #   #   #   #   #  #  #   #   #   #  #  #  #  #  #  #  #  #
-file1 <- "SolyM0-TSS_motif_ranges_q1q9.csv"         # These TSS are the summary statistics of the seqlet distribution of the HDF5 file  
-file2 <- "SolyM0-TTS_motif_ranges_q1q9.csv"         # These TTS are the summary statistics of the seqlet distribution of the HDF5 file
-file3 <- "Arabidopsis_thaliana.TAIR10.55.gff3" # Genome annotation file  #### CODE HERE EXTRACTS NOT COMPLETE GFFF! NEED TO UPDATE CORRECT !!! ASAP
+file1 <- "ZemaS0-TSS_motif_ranges_q1q9.csv"         # These TSS are the summary statistics of the seqlet distribution of the HDF5 file  
+file2 <- "ZemaS0-TTS_motif_ranges_q1q9.csv"         # These TTS are the summary statistics of the seqlet distribution of the HDF5 file
+file3 <- "Zea_mays.Zm-B73-REFERENCE-NAM-5.0.59.gff3" # Genome annotation file  #### CODE HERE EXTRACTS NOT COMPLETE GFFF! NEED TO UPDATE CORRECT !!! ASAP
 #   #   #   #   #  #  #   #   #   #  #  #  #  #  #  #  #  #
 file_path_in_file3 <- file.path(dirpath_1, file3)
 #   #   #   #   #  #  #   #   #   #  #  #  #  #  #  #  #  #
@@ -296,10 +296,14 @@ if (nrow(merg_do_mo0) < 2) {
   error_message <- "Please check identifiers in epm for TSS/TTS ranges.csv and occurences.txt"
   stop(error_message)
 }
+
+### script crashes here:
+
 merg_do_mima_mo0 <- merg_do_mo0 %>%
   filter(dist_transc_border >= min & dist_transc_border <= max)
 merg_do_q10_q90_mo0 <- merg_do_mo0 %>% 
   filter(dist_transc_border >= q10 & dist_transc_border <= q90)
+
 a_mima_df01 <- rbind(merg_up_mima_mo0,
                      merg_do_mima_mo0)
 a_q10q90_df01 <- rbind(merg_up_q10_q90_mo0,
@@ -461,6 +465,9 @@ a0_mima_bed$itemRgb <- c("255,0,127")
 a0_q1q9_bed$thickStart <- c(a0_q1q9_bed$chromStart)
 a0_q1q9_bed$thickStart <- c(a0_q1q9_bed$chromEnd)
 a0_q1q9_bed$itemRgb <- c("255,0,127")
+
+a0_q1q9_bed <- unique(a0_q1q9_bed)
+a0_mima_bed <- unique(a0_mima_bed)
 ############################################################## GENERATE OUTPUT
 file_path_out <- file.path(dirpath_2, paste0(DATE, SPEC, MODEL, PROJECT,
                                              "_",Filter_annot_type,"_", Filter_motif_orient))
