@@ -28,16 +28,16 @@
 # 2023-10-05 by Dr. Simon M. Zumkeller
 
 ########################## [SETUP] ##############################
-setwd("/home/ibg-4/Desktop/Rhome/moca_blue/mo_nom")
+setwd("/mnt/data/personal/gernot/Code/moca_blue/moca_blue/mo_nom")
 ###################### 
 NAME0="rdf5_"
-SPEC="Arth"
-MODEL="D6" #D0 drought 0h
+SPEC="MSR_ZEMA"
+MODEL="M0X0.75dP7K25f" #D0 drought 0h
 #######################################################
-FILE1= "Atha-6h_modisco.hdf5"
+FILE1= "MSR_atha_bvul_bole_csat_cqui_ccum_dcar_gmax_osat_slyc_sbic_ZMAY_M0X0.75dP7K25f_deepcre_motifs_250709_131743.hdf5"
 #######################################################
 dirpath_in = "../0MOTIFS"
-dirpath_out = "./out"
+dirpath_out = "../out"
 # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 library(rhdf5)
