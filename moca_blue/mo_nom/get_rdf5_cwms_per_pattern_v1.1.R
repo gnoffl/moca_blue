@@ -42,6 +42,36 @@ dirpath_out = "../out"
 
 library(rhdf5)
 library(tidyr)
+########################## [COMMAND LINE ARGS] ##############################
+args = commandArgs(trailingOnly=TRUE)
+if (length(args) > 6) {
+  stop("Cannot provide more than 6 arguments!", call.=FALSE)
+}
+if (length(args)==6) {
+  dirpath_out = args[6]
+}
+if (length(args)>=5) {
+  dirpath_in = args[5]
+}
+if (length(args)>=4) {
+  FILE1 = args[4]
+}
+if (length(args)>=3) {
+  MODEL = args[3]
+}
+if (length(args)>=2) {
+  SPEC = args[2]
+}
+if (length(args)>=1) {
+  NAME0 = args[1]
+}
+# print all arguments
+cat("NAME0:", NAME0, "\n")
+cat("SPEC:", SPEC, "\n")
+cat("MODEL:", MODEL, "\n")
+cat("FILE1:", FILE1, "\n")
+cat("dirpath_in:", dirpath_in, "\n")
+cat("dirpath_out:", dirpath_out, "\n")
 ########################## [PROCESSING] ##############################
 #                                                                           [1]
 # # # # # # # # # # # # # # # # # # # # # # # # # # # #
