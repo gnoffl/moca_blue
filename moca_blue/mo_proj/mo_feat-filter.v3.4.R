@@ -20,28 +20,67 @@
 # It contains which motifs matched what gene region
 # All files need to imported into R and combined
 # The goal of this script is to characterize genes that have identified motifs in their flanking regions
-setwd("/home/ibg-4/Desktop/Rhome/moca_blue/mo_proj/")
 #gff annotations might be edited eg. sed -i 's/ID=gene:[^A]*AT/ID=gene:AT/g' path/to/file
 ##############################################################
-PROJECT <- "ZemaS0_genZemaB73p0e-4_2024h"
-SPEC <- "Zema"
-MODEL <- "S0"
-DATE <- "2024H"
+working_directory = "/home/ibg-4/Desktop/Rhome/moca_blue/mo_proj/"
+BASENAME = "SPECIES_MODEL_DATE"
 ##############################################################
-weight_region   <- "yes"   # choose between "yes" or "no". If you write yes, an additional filter will be applied to occurences
+weight_region <- "yes"   # choose between "yes" or "no". If you write yes, an additional filter will be applied to occurences
 word_size <- 14  # This is not a real wordsize like in BLAST but it works similar. All matches smaller than this size will be removed.
 ##############################################################
-dirpath_1 <- "./../ref_seq"
-dirpath_2 <- "./out"
+output_folder <- "../out"
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #   #   #   #   #  #  #   #   #   #  #  #  #  #  #  #  #  #
-file4 <- "result_ZemaS0_genZemaB73p0e-4_2024h"    #   These are the filtered results of the the BLAMM output occurence.txt
+TSS_motifs <- "ZemaS0-TSS_motif_ranges_q1q9.csv"         # These TSS are the summary statistics of the seqlet distribution of the HDF5 file  
+TTS_motifs <- "ZemaS0-TTS_motif_ranges_q1q9.csv"         # These TTS are the summary statistics of the seqlet distribution of the HDF5 file
 #   #   #   #   #  #  #   #   #   #  #  #  #  #  #  #  #  #
-file1 <- "ZemaS0-TSS_motif_ranges_q1q9.csv"         # These TSS are the summary statistics of the seqlet distribution of the HDF5 file  
-file2 <- "ZemaS0-TTS_motif_ranges_q1q9.csv"         # These TTS are the summary statistics of the seqlet distribution of the HDF5 file
-file3 <- "Zea_mays.Zm-B73-REFERENCE-NAM-5.0.59.gff3" # Genome annotation file  #### CODE HERE EXTRACTS NOT COMPLETE GFFF! NEED TO UPDATE CORRECT !!! ASAP
+annotation_file <- "Zea_mays.Zm-B73-REFERENCE-NAM-5.0.59.gff3" # Genome annotation file  #### CODE HERE EXTRACTS NOT COMPLETE GFFF! NEED TO UPDATE CORRECT !!! ASAP
+filtered_mapping_path <- "result_ZemaS0_genZemaB73p0e-4_2024h"    #   These are the filtered results of the the BLAMM output occurence.txt
+##############################################################
+args = commandArgs(trailingOnly=TRUE)
+if (length(args) > 9) {
+  stop("Cannot provide more than 9 arguments! Usage: <script> [working_directory] [BASENAME] [weight_region] [word_size] [output_folder] [TSS_motifs] [TTS_motifs] [annotation_file] [filtered_mapping_path]", call.=FALSE)
+}
+if (length(args)>=9) {
+  word_size = as.numeric(args[9])
+}
+if (length(args)>=8) {
+  weight_region = args[8]
+}
+if (length(args)>=7) {
+  filtered_mapping_path = args[7]
+}
+if (length(args)>=6) {
+  annotation_file = args[6]
+}
+if (length(args)>=5) {
+  TTS_motifs = args[5]
+}
+if (length(args)>=4) {
+  TSS_motifs = args[4]
+}
+if (length(args)>=3) {
+  output_folder = args[3]
+}
+if (length(args)>=2) {
+  BASENAME = args[2]
+}
+if (length(args)>=1) {
+  working_directory = args[1]
+}
+# print all arguments
+print(paste("Working directory:", working_directory))
+print(paste("Base name:", BASENAME))
+print(paste("Weight region:", weight_region))
+print(paste("Word size:", word_size))
+print(paste("Output folder:", output_folder))
+print(paste("TSS file:", TSS_motifs))
+print(paste("TTS file:", TTS_motifs))
+print(paste("Annotation file:", annotation_file))
+print(paste("Filtered mapping results:", filtered_mapping_path))
+##############################################################
+setwd(working_directory)
 #   #   #   #   #  #  #   #   #   #  #  #  #  #  #  #  #  #
-file_path_in_file3 <- file.path(dirpath_1, file3)
 #   #   #   #   #  #  #   #   #   #  #  #  #  #  #  #  #  #
 ### FILTERs #### All filters will be applied to the q1q9 output file. 
 # For comparison default output shows motif matches in gene flanking regions (1500 kbp up/do window)
@@ -58,25 +97,76 @@ Filter_annot_type   <- "gene"
 # Load the necessary packages
 library(dplyr)
 library(stringr)
+# if (!require("BiocManager", quietly = TRUE))
+#     install.packages("BiocManager")
+
+# # The following initializes usage of Bioc devel
+# BiocManager::install(version=3.14, lib="/home/gernot/Rpackages")
+# # BiocManager::install("Rhtslib", lib="/home/gernot/Rpackages")
+# BiocManager::install("rtracklayer", lib="/home/gernot/Rpackages")
 library(rtracklayer)
 ##############################################################
+
+
+
+
 #THIS MUST BE CHANGED AN ADJUSTED WHEN IT IS USED ON THE OTHER SPECIES !!
+# convert_epm <- function(code) {
+#   code1 <- substr(code, 1, 12) 
+#   code2 <- substr(code, 13, 17)
+#   code <- paste0(code1, code2)
+#   code <- gsub("Sola", "Soly", code, fixed = TRUE) #ONLY SOLA mispelling
+#   code <- gsub("epm", "epm_", code, fixed = TRUE)
+#   code <- gsub("__", "_", code, fixed = TRUE)
+#   return(code)
+# }
 convert_epm <- function(code) {
-  code1 <- substr(code, 1, 12) 
-  code2 <- substr(code, 13, 17)
-  code <- paste0(code1, code2)
-  code <- gsub("Sola", "Soly", code, fixed = TRUE) #ONLY SOLA mispelling
-  code <- gsub("epm", "epm_", code, fixed = TRUE)
-  code <- gsub("__", "_", code, fixed = TRUE)
+  # Flexible EPM conversion function
+  # Handles different species (ARTH, ZEMA, etc.) and dataset types (SSR, MSR, etc.)
+  
+  # Original formats examples:
+  # "epm_SSR_ARTH_S0X0.75dC7K25f_p0m20F_315" -> "epm_Arth_S0X0.75dC7K25f_p0m20"
+  # "epm_MSR_ZEMA_S0X0.75dC7K25f_p1m11R_197" -> "epm_Zema_S0X0.75dC7K25f_p1m11"
+  
+  # Step 1: Remove dataset type prefix (SSR_, MSR_, etc.)
+  code <- gsub("epm_(SSR|MSR|[A-Z]+)_", "epm_", code)
+  
+  # Step 2: Convert species codes to proper case
+  # ARTH -> Arth, ZEMA -> Zema, SOLA -> Soly, etc.
+  species_mapping <- list(
+    "ARTH" = "Arth",
+    "ZEMA" = "Zema", 
+    "SOLA" = "Soly",
+    "SOLY" = "Soly",
+    "ATHA" = "Atha"
+  )
+  
+  # Apply species mapping
+  for (old_code in names(species_mapping)) {
+    pattern <- paste0("_", old_code, "_")
+    replacement <- paste0("_", species_mapping[[old_code]], "_")
+    code <- gsub(pattern, replacement, code, fixed = TRUE)
+  }
+  
+  # Step 3: Extract pattern base and preserve the actual pattern number
+  # Extract everything before the F/R suffix: _p0m20F_315 -> _p0m20
+  code <- gsub("_p([0-9]+)m([0-9]+)[FR]_([0-9]+)$", "_p\\1m\\2", code)
+  
   return(code)
 }
+
+
+
+
+
+
 ##############################################################
-tss_motifs <- read.table(file1, header = TRUE
+tss_motifs <- read.table(TSS_motifs, header = TRUE
                          , sep=",")
-tts_motifs <- read.table(file2, header = TRUE
+tts_motifs <- read.table(TTS_motifs, header = TRUE
                          , sep=",")
 
-gene_annot <- import(file_path_in_file3)
+gene_annot <- import(annotation_file)
 a<-as.data.frame(gene_annot)
 #colnames(a)
 #unique(a$type)
@@ -90,10 +180,16 @@ target_columns <- c("seqnames",
                     "strand",  
                     "phase")
 
+#print column names of the data frame
 if ("gene_id" %in% colnames(a)) {
   target_columns <- c(target_columns, "gene_id")
 } else if ("Name" %in% colnames(a)) {
   target_columns <- c(target_columns, "Name")
+} else if ("ID" %in% colnames(a)) {
+  target_columns <- c(target_columns, "ID")
+} else {
+  print(colnames(a))
+  stop("No suitable identifier column found in the GFF file. Please ensure it contains 'gene_id', 'Name', or 'ID'.")
 }
 
 a <- a[, target_columns]
@@ -128,21 +224,31 @@ gene_annotX <- a
 unique(gene_annot$type)
 ##############################################################
 motif_gene_matches <- read.table(
-  file.path(
-    dirpath_2,
-    file4),
+  file.path(filtered_mapping_path),
   header=TRUE,
   sep="\t")
 ##############################################################
 #Combine DFs by Chr:start-end as loc; Use extracted ranges
 #Create loc to idx df
-gene_annot$loc <- paste(
-  gene_annot$chr,
-  ":",
-  gene_annot$start - 1000,
-  "-",
-  gene_annot$end + 1000,
-  sep = "")
+
+
+
+
+## try different version
+gene_annot$loc <- gene_annot$chr
+# gene_annot$loc <- paste(
+#   gene_annot$chr,
+#   ":",
+#   gene_annot$start - 1000,
+#   "-",
+#   gene_annot$end + 1000,
+#   sep = "")
+
+
+
+
+
+
 #Reduce attributes
 #gene_annot$loc_ID <- str_extract(
 #  gene_annot$attributes,
@@ -188,6 +294,10 @@ subset_filmotif_df <- filtered_motif_df[, c("loc",
                                             "mend",
                                             "score",
                                             "strand")]
+print("sample of subset_filmotif_df")
+print(head(subset_filmotif_df, 5))
+print("sample of gene_annot0")
+print(head(gene_annot0, 5))
 merg_df <- merge(gene_annot0,
                  subset_filmotif_df,
                  by = "loc", all.x = TRUE)
@@ -291,6 +401,12 @@ merg_do_mo <- merge(do_merg_df00,
                     subset_tts_m,
                     by = "epm", all.x = TRUE)
 merg_do_mo0 <- na.omit(merg_do_mo) #! ???????????????????????????????????
+# print("Sample downstream regions:")
+# print(head(do_merg_df00, 5))
+# print("Sample merged downstream motif data before removing NAs:")
+# print(head(merg_do_mo, 5))
+# print("Sample merged downstream motif data after removing NAs:")
+# print(head(merg_do_mo0, 5))
 # Internal check for the number of rows
 if (nrow(merg_do_mo0) < 2) {
   error_message <- "Please check identifiers in epm for TSS/TTS ranges.csv and occurences.txt"
@@ -322,6 +438,13 @@ if (weight_region == "yes") {
   tts_motifs$weighted_region <- NA
   for (i in tss_motifs$epm) {
     tts_row <- tts_motifs[tts_motifs$epm == i, ]
+    # Check if matching TTS row exists
+    if (nrow(tts_row) == 0) {
+      # No matching TTS motif found, skip this iteration
+      cat("Warning: No TTS match found for EPM:", i, "\n")
+      next
+    }
+
     c_sum <- sum(tss_motifs[tss_motifs$epm == i, "number"], tts_row$number)
     threshold <- 0.2 * c_sum                                             ################ change weight here here here here
     if (tss_motifs[tss_motifs$epm == i, "number"] < threshold) {
@@ -469,8 +592,11 @@ a0_q1q9_bed$itemRgb <- c("255,0,127")
 a0_q1q9_bed <- unique(a0_q1q9_bed)
 a0_mima_bed <- unique(a0_mima_bed)
 ############################################################## GENERATE OUTPUT
-file_path_out <- file.path(dirpath_2, paste0(DATE, SPEC, MODEL, PROJECT,
-                                             "_",Filter_annot_type,"_", Filter_motif_orient))
+file_path_out <- file.path(output_folder, paste0(BASENAME, "_",Filter_annot_type,"_", Filter_motif_orient))
+# make folders for output files
+if (!dir.exists(output_folder)) {
+  dir.create(output_folder, recursive = TRUE)
+}
 #write.csv(a0_DF_df, file=paste0(file_path_out,
 #                                "-def.csv"), row.names=FALSE)
 write.csv(a0_mima_df, file=paste0(file_path_out,
