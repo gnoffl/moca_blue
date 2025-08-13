@@ -1,17 +1,38 @@
 library(rhdf5)
-#install.packages("plyr")
-#library(plyr)
+# install.packages("plyr")
+library(plyr)
 library(tidyr)
-setwd("~/Desktop/Rhome/moca_blue/mo_clu")
 ###################################################################################
-NAME0="rdf5_seqlet_pattern"
-SPEC="Arth"
-MODEL="D0"  # C0 stand for DeepCistrome version 1 (available at 02-may-2023) Standard conditions
+working_directory = "~/Desktop/Rhome/moca_blue/mo_clu"
+BASENAME = "SPECIES_MODEL_WHATEVER"
 #######################################################
 FILE1= "Atha-0h_modisco.hdf5"
 ###################################################################################
-dirpath_in = "../0MOTIFS"
-dirpath_out = "./out"
+dirpath_out = "../out/ranges"
+
+args = commandArgs(trailingOnly=TRUE)
+if (length(args) > 4) {
+  stop("Cannot provide more than 4 arguments!\nUsage: <script.R> [working_directory] [BASENAME] [FILE1] [dirpath_out]", call.=FALSE)
+}
+if (length(args)==4) {
+  dirpath_out = args[4]
+}
+if (length(args)>=3) {
+  FILE1 = args[3]
+}
+if (length(args)>=2) {
+  BASENAME = args[2]
+}
+if (length(args)>=1) {
+  working_directory = args[1]
+}
+# print all arguments
+cat("BASENAME:", BASENAME, "\n")
+cat("FILE1:", FILE1, "\n")
+cat("dirpath_out:", dirpath_out, "\n")
+cat("working_directory:", working_directory, "\n")
+
+setwd(working_directory)
 # Define the pattern names to iterate over
 
 ###################################################
@@ -21,9 +42,7 @@ dirpath_out = "./out"
 #motifs in metacluster 1 -automatize this step
 #Y=10
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-h5file <- H5Fopen(file.path(
-  dirpath_in,
-  FILE1), "H5F_ACC_RDONLY")
+h5file <- H5Fopen(file.path(FILE1), "H5F_ACC_RDONLY")
 h5ls(h5file)
 metacluster_group <- h5read(h5file, "metacluster_idx_to_submetacluster_results")
 # loop through the metaclusters 0 and 1
@@ -91,6 +110,6 @@ df$end <- gsub("end:", "", df$end)
 df$rc <- gsub("rc:", "", df$rc)
 
 ############################################################################ ######
-file_path_out <- file.path(dirpath_out, paste0(NAME0,SPEC,MODEL))
-
+file_path_out <- file.path(dirpath_out, paste0(BASENAME))
+dir.create(dirpath_out, recursive = TRUE, showWarnings = FALSE)
 write.csv(df, file = paste0(file_path_out,".txt"), row.names = FALSE)

@@ -28,56 +28,43 @@
 # 2023-10-05 by Dr. Simon M. Zumkeller
 
 ########################## [SETUP] ##############################
-setwd("/mnt/data/personal/gernot/Code/moca_blue/moca_blue/mo_nom")
-###################### 
-NAME0="rdf5_"
-SPEC="MSR_ZEMA"
-MODEL="M0X0.75dP7K25f" #D0 drought 0h
+working_directory <- "/mnt/data/personal/gernot/Code/moca_blue/moca_blue/mo_nom"
+#######################
+BASENAME = "SPECIES_MODEL_WHATEVER"
 #######################################################
 FILE1= "MSR_atha_bvul_bole_csat_cqui_ccum_dcar_gmax_osat_slyc_sbic_ZMAY_M0X0.75dP7K25f_deepcre_motifs_250709_131743.hdf5"
 #######################################################
-dirpath_in = "../0MOTIFS"
 dirpath_out = "../out"
 # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-library(rhdf5)
-library(tidyr)
+library(rhdf5, lib.loc="/home/gernot/Rpackages/")
+library(tidyr, lib.loc="/home/gernot/Rpackages/")
 ########################## [COMMAND LINE ARGS] ##############################
 args = commandArgs(trailingOnly=TRUE)
-if (length(args) > 6) {
-  stop("Cannot provide more than 6 arguments!", call.=FALSE)
+if (length(args) > 4) {
+  stop("Cannot provide more than 4 arguments!", call.=FALSE)
 }
-if (length(args)==6) {
-  dirpath_out = args[6]
-}
-if (length(args)>=5) {
-  dirpath_in = args[5]
-}
-if (length(args)>=4) {
-  FILE1 = args[4]
+if (length(args)==4) {
+  dirpath_out = args[4]
 }
 if (length(args)>=3) {
-  MODEL = args[3]
+  FILE1 = args[3]
 }
 if (length(args)>=2) {
-  SPEC = args[2]
+  BASENAME = args[2]
 }
 if (length(args)>=1) {
-  NAME0 = args[1]
+  working_directory = args[1]
 }
 # print all arguments
-cat("NAME0:", NAME0, "\n")
-cat("SPEC:", SPEC, "\n")
-cat("MODEL:", MODEL, "\n")
+cat("BASENAME:", BASENAME, "\n")
 cat("FILE1:", FILE1, "\n")
-cat("dirpath_in:", dirpath_in, "\n")
 cat("dirpath_out:", dirpath_out, "\n")
+cat("working_directory:", working_directory, "\n")
 ########################## [PROCESSING] ##############################
 #                                                                           [1]
 # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-h5file <- H5Fopen(file.path(
-  dirpath_in,
-  FILE1), "H5F_ACC_RDONLY")
+setwd(working_directory) # Set the working directory to the parent directory of this script
+h5file <- H5Fopen(file.path(FILE1), "H5F_ACC_RDONLY")
 metacluster_group <- h5read(h5file,
                             "metacluster_idx_to_submetacluster_results")
 #######################################################
@@ -130,7 +117,7 @@ names(matricesF0) <- paste0(names(matricesF0),
 names(matricesF0) <- substr(names(matricesF0), nchar(names(matricesF0)) - 4, nchar(names(matricesF0)))
 names(matricesF0) <- paste0(names(matricesF0),
                             "F")
-names(matricesF0) <- paste0("epm_", SPEC, "_", MODEL, "_", names(matricesF0))
+names(matricesF0) <- paste0("epm_", BASENAME, "_", names(matricesF0))
 ###############                  ####################            ###################
 names(matricesF1) <- paste0(names(matricesF1),
                             "_p1m",
@@ -139,7 +126,7 @@ names(matricesF1) <- paste0(names(matricesF1),
 names(matricesF1) <- substr(names(matricesF1), nchar(names(matricesF1)) - 4, nchar(names(matricesF1)))
 names(matricesF1) <- paste0(names(matricesF1),
                             "F")
-names(matricesF1) <- paste0("epm_", SPEC, "_", MODEL, "_", names(matricesF1))
+names(matricesF1) <- paste0("epm_", BASENAME, "_", names(matricesF1))
 ###############                  ####################            ###################
 names(matricesR1) <- paste0(names(matricesR1),
                             "_p1m",
@@ -148,7 +135,7 @@ names(matricesR1) <- paste0(names(matricesR1),
 names(matricesR1) <- substr(names(matricesR1), nchar(names(matricesR1)) - 4, nchar(names(matricesR1)))
 names(matricesR1) <- paste0(names(matricesR1),
                             "R")
-names(matricesR1) <- paste0("epm_", SPEC, "_", MODEL, "_", names(matricesR1))
+names(matricesR1) <- paste0("epm_", BASENAME, "_", names(matricesR1))
 ###############                  ####################            ###################
 names(matricesR0) <- paste0(names(matricesR0),
                             "_p0m",
@@ -157,7 +144,7 @@ names(matricesR0) <- paste0(names(matricesR0),
 names(matricesR0) <- substr(names(matricesR0), nchar(names(matricesR0)) - 4, nchar(names(matricesR0)))
 names(matricesR0) <- paste0(names(matricesR0),
                             "R")
-names(matricesR0) <- paste0("epm_", SPEC, "_", MODEL, "_", names(matricesR0))
+names(matricesR0) <- paste0("epm_", BASENAME, "_", names(matricesR0))
 ###############                  ####################            ###################   # ADD NUMBER OF SEQLETS TO NAMES !!!!
 seqlets_count_p0 <- head(seqletls_lengths_p0, x0)
 
@@ -221,7 +208,7 @@ for (idx in seq(1:y02)){
 }
 #############
 #                                                                           [4]
-file_path_out <- file.path(dirpath_out, paste0(NAME0,SPEC,MODEL))
+file_path_out <- file.path(dirpath_out, paste0(BASENAME))
 
 writeLines(unlist(text), paste0(file_path_out,"_cwm-motifs.jaspar"))
 #####################################################################################

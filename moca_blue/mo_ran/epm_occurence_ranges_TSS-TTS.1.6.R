@@ -1,19 +1,45 @@
 library(dplyr)
+# install.packages("ggplot2")
 library(ggplot2)
 #library(MASS)
-setwd("~/Desktop/Rhome/moca_blue/mo_clu")
+working_directory = "~/Desktop/Rhome/moca_blue/mo_clu"
 #########################################################################################################################
-NAME0="rdf5_seqlet_pattern"
-SPEC="Arth"
-MODEL="D0"
-FILE= "Atha-0h_modisco.hdf5"
+SEQLET_FILE = "blabla.txt"
+HDF5_FILE= "Atha-0h_modisco.hdf5"
+BASENAME = "SPECIES_MODEL_ETC"
 #########################################################################################################################
-dirpath_in = "./out"
-dirpath_out = "./out"
+dirpath_out = "../out/ranges"
+#########################################################################################################################
+args = commandArgs(trailingOnly=TRUE)
+if (length(args) > 5) {
+  stop("Cannot provide more than 5 arguments!\nUsage: <script.R> [<working_directory>] [<SEQLET_FILE>] [<HDF5_FILE>] [<BASENAME>] [<dirpath_out>]", call.=FALSE)
+}
+if (length(args)==5) {
+  dirpath_out = args[5]
+}
+if (length(args)>=4) {
+  BASENAME = args[4]
+}
+if (length(args)>=3) {
+  HDF5_FILE = args[3]
+}
+if (length(args)>=2) {
+  SEQLET_FILE = args[2]
+}
+if (length(args)>=1) {
+  working_directory = args[1]
+}
+# print all arguments
+cat("working directory:", working_directory, "\n")
+cat("SEQLET_FILE:", SEQLET_FILE, "\n")
+cat("HDF5_FILE:", HDF5_FILE, "\n")
+cat("BASENAME:", BASENAME, "\n")
+cat("dirpath_out:", dirpath_out, "\n")
+
+setwd(working_directory)
 ############################################################
-file_path_in <- file.path(dirpath_in, paste0(NAME0,SPEC,MODEL))
 #data <- read.csv("rdf5_seqlet_patternArthM0.txt"), sep=",")
-data <- read.csv(file = paste0(file_path_in,".txt"), sep=",")
+data <- read.csv(file = SEQLET_FILE, sep=",")
 #########################################################################################################################
 ########################################################################################################################
 #########################################################################################################################
@@ -43,7 +69,7 @@ for (motif in unique_motifs) {
   #  + scale_x_continuous(breaks = c(0, 500, 1000, 1500, 2020, 2520, 3020))
   
   # Save the plot
-  filename <- paste0("epm_", SPEC, "_", MODEL, "_", motif, ".png")
+  filename <- paste0("epm_", BASENAME, "_", motif, ".png")
   ggsave(filename, p, width = 10, height = 2.5, units = "in", dpi = 300)
 }
 
@@ -101,16 +127,14 @@ result2 <- range2 %>%
 result2$mode <- c(result2$mode * 10)  #mode uses decimal
 
 # add additional information to the result data frames
-result2$Species <- c(SPEC)
-result2$Model <- c(MODEL)
-result2$source <- c(FILE)
+result2$BASENAME <- c(BASENAME)
+result2$source <- c(HDF5_FILE)
 
-result1$Species <- c(SPEC)
-result1$Model <- c(MODEL)
-result1$source <- c(FILE)
+result1$BASENAME <- c(BASENAME)
+result1$source <- c(HDF5_FILE)
 
-result1$epm <- paste("epm", result1$Species, result1$Model, result1$motif, sep="_")
-result2$epm <- paste("epm", result2$Species, result2$Model, result2$motif, sep="_")
+result1$epm <- paste("epm", result1$BASENAME, result1$motif, sep="_")
+result2$epm <- paste("epm", result2$BASENAME, result2$motif, sep="_")
 
 # select only the desired columns in the result data frames
 result1 <- result1 %>%
@@ -120,10 +144,18 @@ result2 <- result2 %>%
   select(epm, min, max, mean, median, mode, q10,  q90,  sd, cv, iqr, number, source)
 
 #########################################################################################################################
-file_path_out <- file.path(dirpath_out, paste0(SPEC,MODEL))
+file_path_out <- file.path(dirpath_out, paste0(BASENAME))
 
 write.csv(result1, file=paste0(file_path_out,"-TSS_motif_ranges_q1q9.csv"), row.names=FALSE)
 write.csv(result2, file=paste0(file_path_out,"-TTS_motif_ranges_q1q9.csv"), row.names=FALSE)
+
+# move all created images (.png files) into visualization folder
+visualization_dir <- file.path(dirpath_out, "visualization")
+dir.create(visualization_dir, recursive = TRUE, showWarnings = FALSE)
+png_files <- list.files(pattern = "\\.png$", full.names = TRUE)
+for (file in png_files) {
+  file.rename(file, file.path(visualization_dir, basename(file)))
+}
 #####################
 #motif_data <- subset(data, motif == "p0m00")
 #total_motifs <- nrow(motif_data)
