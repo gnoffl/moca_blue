@@ -1,5 +1,31 @@
+########################## [SETUP] ##############################
+working_directory <- "/home/ibg-4/Desktop/Rhome/moca_blue/mo_nom"
+#######################
+jaspar_file <- "./out/rdf5_ArthD0D6_cwm-motifs.jaspar"
+#######################################################
+dirpath_out = "../out"
+# # # # # # # # # # # # # # # # # # # # # # # # # # # #
+########################## [COMMAND LINE ARGS] ##############################
+args = commandArgs(trailingOnly=TRUE)
+if (length(args) > 3) {
+  stop("Cannot provide more than 3 arguments! Usage: <script> [<working_directory>] [<jaspar_file>] [<dirpath_out>]", call.=FALSE)
+}
+if (length(args)>=3) {
+  dirpath_out = args[3]
+}
+if (length(args)>=2) {
+  jaspar_file = args[2]
+}
+if (length(args)>=1) {
+  working_directory = args[1]
+}
+# print all arguments
+cat("working_directory:", working_directory, "\n")
+cat("jaspar_file:", jaspar_file, "\n")
+cat("dirpath_out:", dirpath_out, "\n")
+########################## [PROCESSING] ##############################
 # Set working directory
-setwd("/home/ibg-4/Desktop/Rhome/moca_blue/mo_nom")
+setwd(working_directory)
 # Load required libraries
 #if (!requireNamespace("BiocManager", quietly = TRUE))
 #  install.packages("BiocManager")
@@ -9,12 +35,10 @@ library(motifStack)
 library(universalmotif)
 library(JASPAR2020)
 ##################################################################################
-# Update the file name and path accordingly
-jaspar_file <- "./out/rdf5_ArthD0D6_cwm-motifs.jaspar"
-##################################################################################
-
 # + + + + + + +#                                                 # + + + + + + + #
-output_filename <- paste0(jaspar_file, "_comparison_JASPAR2020.csv")
+# split the extension of the file name and add suffix "_comparison_JASPAR2020.csv"
+file_name_without_ext <- tools::file_path_sans_ext(basename(jaspar_file))
+output_filename <- file.path(dirpath_out, paste0(file_name_without_ext, "_comparison_JASPAR2020.csv"))
 ##################################################################################
 pfm <- read_jaspar(jaspar_file)
 pwm_uni0<-convert_motifs(pfm

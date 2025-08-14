@@ -1,5 +1,31 @@
+########################## [SETUP] ##############################
+working_directory <- "/home/ibg-4/Desktop/Rhome/moca_blue/mo_nom"
+#######################
+jaspar_file <- "./out/rdf5_2At-Sb-Sl-ZmM0+S0_cwm-motifs.jaspar"
+#######################################################
+dirpath_out = "../out"
+# # # # # # # # # # # # # # # # # # # # # # # # # # # #
+########################## [COMMAND LINE ARGS] ##############################
+args = commandArgs(trailingOnly=TRUE)
+if (length(args) > 3) {
+  stop("Cannot provide more than 3 arguments! Usage: <script> [<working_directory>] [<jaspar_file>] [<dirpath_out>]", call.=FALSE)
+}
+if (length(args)>=3) {
+  dirpath_out = args[3]
+}
+if (length(args)>=2) {
+  jaspar_file = args[2]
+}
+if (length(args)>=1) {
+  working_directory = args[1]
+}
+# print all arguments
+cat("working_directory:", working_directory, "\n")
+cat("jaspar_file:", jaspar_file, "\n")
+cat("dirpath_out:", dirpath_out, "\n")
+########################## [PROCESSING] ##############################
 # Set working directory
-setwd("/home/ibg-4/Desktop/Rhome/moca_blue/mo_nom")
+setwd(working_directory)
 # Load required libraries
 #if (!requireNamespace("BiocManager", quietly = TRUE))
 #  install.packages("BiocManager")
@@ -9,12 +35,8 @@ library(motifStack)
 library(universalmotif)
 library(JASPAR2020)
 ##################################################################################
-# Update the file name and path accordingly
-jaspar_file <- "./out/rdf5_2At-Sb-Sl-ZmM0+S0_cwm-motifs.jaspar"
-##################################################################################
-
 # + + + + + + +#                                                 # + + + + + + + #
-output_filename <- paste0(jaspar_file, "_comparison_JASPAR2020.csv")
+output_filename <- file.path(dirpath_out, paste0(basename(jaspar_file), "_comparison_JASPAR2020.csv"))
 ##################################################################################
 pfm <- read_jaspar(jaspar_file)
 pwm_uni0<-convert_motifs(pfm
@@ -28,8 +50,12 @@ similarities_list <- vector("list", length = length(pwm_uni0))
 jaspar_motifs_plants0 <-convert_motifs(jaspar_motifs_plants
                                        , class = "TFBSTools-PWMatrix")
 ###################################################
+omni_list<- c(pwm_uni0, jaspar_motifs_plants0)
 omni_pvlist <- list()
 for (i in 1:length(pwm_uni0)) {
+  # # Combine your extracted motif with all JASPAR motifs for comparison
+  # combined_motifs <- c(pwm_uni0[i], jaspar_motifs_plants0)
+  # # Compare the first motif (your extracted one) against all others
   omni_pvlist[[i]] <- compare_motifs(omni_list, i)
 }
 ####  #################################     #########
