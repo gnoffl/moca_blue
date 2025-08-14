@@ -11,12 +11,12 @@
 # NAME0: Name identifier for source file, SPEC: Specifies the species (e.g., "Zema"), MODEL: Specifies the model (e.g., "S0", "S1" or "S0+M0"), TYPE: Specifies the type of motif file (e.g., "_cwm-motifs.jaspar")
 # To run and store the script the parent directory requires a daugther directory named "out" where the output is stored and other scripts of the moca_blue suite will access it.
 # FILEPATHs: 
-# FILE1: Combines the setup variables to create the input motif file path, dirpath_in: Specifies the input directory path, dirpath_out: Specifies the output directory path.
+# jaspar_file: Combines the setup variables to create the input motif file path, dirpath_in: Specifies the input directory path, dirpath_out: Specifies the output directory path.
 # LIBARY DEPENDENCIES: 
 # The script loads several R libraries including grid, TFBSTools, motifStack, universalmotif, ape, and ggtree.
 # 
 # PROCESSING STEPS:
-# [1] - Motifs are read from the JASPAR motif file specified in FILE1 using the read_jaspar function. The motifs are stored in the cwm1 list.
+# [1] - Motifs are read from the JASPAR motif file specified in jaspar_file using the read_jaspar function. The motifs are stored in the cwm1 list.
 # [2] - Motif names are modified to include additional information. The script extracts the number of sites (nsites or consensus) from the motif name and appends it to the motif name.
 # [3] - The motifs are converted into different formats, such as position weight matrices (PWM) and position count matrices (PCM) for later analyses depending on the clustering algorithm.
 # [4] - The script summarizes the motifs in PCM format and writes the summary to a CSV file.
@@ -32,28 +32,83 @@
 # 2023-10-05 by Dr. Simon M. Zumkeller
 ######################################################
 ################## [SETUP] ###########################
-setwd("/home/ibg-4/Desktop/Rhome/moca_blue/mo_clu")
 ######################################################
-NAME0="rdf5_epm"
-SPEC ="Arth"
-MODEL="D0D6" # C0 stand for DeepCistrome version 1 (available at 02-may-2023) Standard conditions
-TYPE ="_cwm-motifs.jaspar"
-#######################################################
-#FILE1 = paste0(NAME0,SPEC,MODEL,TYPE)
-FILE1 = "rdf5_ArthD0D6_cwm-motifs.jaspar"
+#jaspar_file = paste0(NAME0,SPEC,MODEL,TYPE)
+jaspar_file = "rdf5_ArthD0D6_cwm-motifs.jaspar"
 #######################################################
 string_to_remove1 <- "Arth_D0" #Define what EPMs should be compared by PCC similarity from here
 string_to_remove2 <- "Arth_D6" # to here...
 #######################################################
-folder_name <- paste0(SPEC, "_", MODEL)
-dir.create(folder_name, showWarnings = FALSE)
 #######################################################
-dirpath_in = "../mo_nom/out/"
 dirpath_out = "./out/"
-setwd("/home/ibg-4/Desktop/Rhome/moca_blue/mo_clu") 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-File1 <- paste0(dirpath_in,FILE1)
+#######################################################
 # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+########################## [COMMAND LINE ARGS] ##############################
+args = commandArgs(trailingOnly=TRUE)
+if (length(args) > 3) {
+  stop("Cannot provide more than 3 arguments! Usage: <script> [<working_directory>] [<jaspar_file>] [<dirpath_out>]", call.=FALSE)
+}
+if (length(args)>=3) {
+  dirpath_out = args[3]
+}
+if (length(args)>=2) {
+  jaspar_file = args[2]
+}
+if (length(args)>=1) {
+  working_directory = args[1]
+}
+# print all arguments
+cat("working_directory:", working_directory, "\n")
+cat("jaspar_file:", jaspar_file, "\n")
+cat("dirpath_out:", dirpath_out, "\n")
+
+
+setwd(working_directory)
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# Function to check and install packages
+install_if_missing <- function(packages) {
+  # Get list of installed packages
+  installed_packages <- rownames(installed.packages())
+  
+  # Check which packages are missing
+  missing_packages <- packages[!packages %in% installed_packages]
+  
+  if (length(missing_packages) > 0) {
+    cat("Installing missing packages:", paste(missing_packages, collapse = ", "), "\n")
+    
+    # Separate CRAN and Bioconductor packages
+    bioc_packages <- c("TFBSTools", "motifStack", "universalmotif", "ggtree")
+    cran_packages <- missing_packages[!missing_packages %in% bioc_packages]
+    bioc_missing <- missing_packages[missing_packages %in% bioc_packages]
+    
+    # Install CRAN packages
+    if (length(cran_packages) > 0) {
+      install.packages(cran_packages, repos = "https://cran.r-project.org")
+    }
+    
+    # Install Bioconductor packages
+    if (length(bioc_missing) > 0) {
+      if (!requireNamespace("BiocManager", quietly = TRUE)) {
+        install.packages("BiocManager", repos = "https://cran.r-project.org")
+      }
+      BiocManager::install(bioc_missing)
+    }
+  }
+}
+
+# List of required packages
+required_packages <- c("grid", "TFBSTools", "motifStack", "universalmotif", 
+                      "ape", "ggtree", "ggplot2", "ggseqlogo", "Cairo")
+if (!requireNamespace("BiocManager", quietly = TRUE)) {
+        install.packages("BiocManager", repos = "https://cran.r-project.org")
+      }
+BiocManager::install(version = "3.21", ask=FALSE) # or omit 'version' for latest
+# Install missing packages
+install_if_missing(required_packages)
+
+# Load libraries
 library(grid)
 library(TFBSTools)
 library(motifStack)
@@ -64,7 +119,8 @@ library(ggplot2)
 library(ggseqlogo)
 library(Cairo)
 # ##################################################
-cwm1 <- read_jaspar(File1)
+cwm1 <- read_jaspar(jaspar_file)
+output_path_base = file.path(dirpath_out, paste0(basename(jaspar_file)))
 ##################################################
 # Loop through each motif object in the list
 for (i in seq_along(cwm1)) {
@@ -113,128 +169,131 @@ for (i in 1:pcm_length) {
   )
   # Save the plot with custom width and height
   file_name <- paste0(pcm[[i]]@name, ".png")
-  file_path <- file.path(folder_name, file_name)
+  file_path <- file.path(dirpath_out, file_name)
   ggsave(file_path, plot = seq_logo, width = 4831, height = 592, units = "px")
 }
-##################################################
-sum<-as.data.frame(summarise_motifs(pcm))
-write.csv(sum, file = paste0(dirpath_out,FILE1,"summary.txt"))
-##################################################
-##########################################################
-c<-compare_motifs(cwm1, method = "SW")
-c0<-as.data.frame(c)
-c1 <- as.matrix(c0)
-lower_percentile <- quantile(c1, probs = 0.05)
-#lower_percentile <- max(c1)*0.1
-upper_percentile <- quantile(c1, probs = 0.95)
-#upper_percentile <- max(c1)*0.9
-###
-cX <- c0[!grepl(string_to_remove1, rownames(c0))]
-cX1 <- as.data.frame(t(cX))
-cX2 <- cX1[!grepl(string_to_remove2, rownames(c0))]
-##############         ####################      ##################
-cY <- c0[!grepl(string_to_remove2, rownames(c0))]
-cY1 <- as.data.frame(t(cY))
-cY2 <- cY1[!grepl(string_to_remove1, rownames(c0))]
-##############         ####################      ##################
-cXX2 <- cX2-upper_percentile
-cXX3 <- as.data.frame(ifelse(cXX2 < 0, 0, 1))
-cXX3$sum <- rowSums(cXX3)
 
-cYY2 <- cY2-upper_percentile
-cYY3 <- as.data.frame(ifelse(cYY2 < 0, 0, 1))
-cYY3$sum <- rowSums(cYY3)
-epms_without_highly_similar_counterpartsX <- rownames(cXX3[cXX3$sum < 1, ])
-epms_with_highly_similar_counterpartsX <- rownames(cXX3[cXX3$sum >= 1, ])
-epms_without_highly_similar_counterpartsY <- rownames(cYY3[cYY3$sum < 1, ])
-epms_with_highly_similar_counterpartsY <- rownames(cYY3[cYY3$sum >= 1, ])
-epms_without_highly_similar_counterparts <- c(epms_without_highly_similar_counterpartsX,
-                                                  epms_without_highly_similar_counterpartsY)
-epms_with_highly_similar_counterparts <- c(epms_with_highly_similar_counterpartsX,
-                                              epms_with_highly_similar_counterpartsY)
-#########################################################################
-write.table(epms_without_highly_similar_counterparts, file = paste0(dirpath_out, FILE1, "_epms_without_highly_similar_counterparts-SW.csv"), sep = "\t", col.names = NA, quote = FALSE)
-write.table(epms_with_highly_similar_counterparts, file = paste0(dirpath_out, FILE1, "_epms_with_highly_similar_counterparts-SW.csv"), sep = "\t", col.names = NA, quote = FALSE)
-write.table(c0, file = paste0(dirpath_out, FILE1, "_matrix-SW.csv"), sep = "\t", col.names = NA, quote = FALSE)
-#assign scores from data.frame to branches for selection
-comp_1 <- 1-c
-comp_1 <- as.dist(comp_1)
-#labels <- attr(comp_1, "Labels")
-comp_2 <- ape::as.phylo(hclust(comp_1))
-comp_2[["edge.length"]] <- comp_2[["edge.length"]]+1
-comp_2[["edge.length"]]
-# Create a rooted phylo object
-phylo_tree <- as.phylo(comp_2)
-# Save the tree with positive edge lengths
-write.tree(comp_2, file = paste0(dirpath_out, FILE1, "-Sandelin-Wassermann.nwk"))
-#################################################
-c_pcm<-clusterMotifs(pcm, method = "Smith-Waterman") ### !!! TIME TO GET A COFFEEE !!! ###
-hc<- c_pcm
-motifs<-pcm[hc$order]
-##################################################
-write.tree(as.phylo(c_pcm), file = paste0(dirpath_out,FILE1,"-Smith-Waterman.nwk"))
+#ignoring the following lines, as i just want to visualize the motifs
 
-#par(cex = 0.2)##############################################################
-#pdf("output3.pdf", width = 30, height = 40)
-#plotMotifLogoStackWithTree(pcm, c_pcm,
-#                           treewidth = 1/8,
-#                           trueDist = TRUE)
-#dev.off()
-# Get the number of elements in pcm
-num_elements <- length(pcm)
-# Initialize an empty list to store filtered elements
-pcm_filtered <- vector("list", length = num_elements)
-# Loop through each element in pcm and filter
-for (i in 1:num_elements) {
-  if (!grepl("R_", pcm[[i]]@name)) {
-    pcm_filtered[[i]] <- pcm[[i]]
-  }
-}
-# Remove NULL elements (objects where @name contains "R_")
-pcm_filtered <- pcm_filtered[!sapply(pcm_filtered, is.null)]
-browseMotifs(
-  pcm_filtered,
-  layout = "cluster",
-  nodeRadius = 5,
-  baseHeight = 30,
-  baseWidth = 12,
-  xaxis = TRUE,
-  width = 100,
-  height = 1700
-)
-##############################################################
+# ##################################################
+# sum<-as.data.frame(summarise_motifs(pcm))
+# write.csv(sum, file = paste0(output_path_base,"summary.txt"))
+# ##################################################
+# ##########################################################
+# c<-compare_motifs(cwm1, method = "SW")
+# c0<-as.data.frame(c)
+# c1 <- as.matrix(c0)
+# lower_percentile <- quantile(c1, probs = 0.05)
+# #lower_percentile <- max(c1)*0.1
+# upper_percentile <- quantile(c1, probs = 0.95)
+# #upper_percentile <- max(c1)*0.9
+# ###
+# cX <- c0[!grepl(string_to_remove1, rownames(c0))]
+# cX1 <- as.data.frame(t(cX))
+# cX2 <- cX1[!grepl(string_to_remove2, rownames(c0))]
+# ##############         ####################      ##################
+# cY <- c0[!grepl(string_to_remove2, rownames(c0))]
+# cY1 <- as.data.frame(t(cY))
+# cY2 <- cY1[!grepl(string_to_remove1, rownames(c0))]
+# ##############         ####################      ##################
+# cXX2 <- cX2-upper_percentile
+# cXX3 <- as.data.frame(ifelse(cXX2 < 0, 0, 1))
+# cXX3$sum <- rowSums(cXX3)
 
-#pcm2 <- pcm
-#pcm2<- pcm2[!sapply(pcm2, function(x) grepl("R_", x$name))]
-#sapply(pcm2, class)
-#for (i in seq_along(pcm2)) {
-#  pcm2[[i]]$name <- substr(pcm2[[i]]$name, 1, 23)
-#}
-#str(pcm2)
-#pcm_hcNW <- clusterMotifs(pcm2, method = "Needleman-Wunsch")
-#phylo_tree <- ade4::hclust2phylog(pcm_hcNW)
-#phylo_tree <- as.phylo(pcm_hcNW)
-#plot(as.dendrogram((phylo_tree)))
-#plotMotifStackWithPhylog(phylo_tree, pcm2)
+# cYY2 <- cY2-upper_percentile
+# cYY3 <- as.data.frame(ifelse(cYY2 < 0, 0, 1))
+# cYY3$sum <- rowSums(cYY3)
+# epms_without_highly_similar_counterpartsX <- rownames(cXX3[cXX3$sum < 1, ])
+# epms_with_highly_similar_counterpartsX <- rownames(cXX3[cXX3$sum >= 1, ])
+# epms_without_highly_similar_counterpartsY <- rownames(cYY3[cYY3$sum < 1, ])
+# epms_with_highly_similar_counterpartsY <- rownames(cYY3[cYY3$sum >= 1, ])
+# epms_without_highly_similar_counterparts <- c(epms_without_highly_similar_counterpartsX,
+#                                                   epms_without_highly_similar_counterpartsY)
+# epms_with_highly_similar_counterparts <- c(epms_with_highly_similar_counterpartsX,
+#                                               epms_with_highly_similar_counterpartsY)
+# #########################################################################
+# write.table(epms_without_highly_similar_counterparts, file = paste0(output_path_base, "_epms_without_highly_similar_counterparts-SW.csv"), sep = "\t", col.names = NA, quote = FALSE)
+# write.table(epms_with_highly_similar_counterparts, file = paste0(output_path_base, "_epms_with_highly_similar_counterparts-SW.csv"), sep = "\t", col.names = NA, quote = FALSE)
+# write.table(c0, file = paste0(output_path_base, "_matrix-SW.csv"), sep = "\t", col.names = NA, quote = FALSE)
+# #assign scores from data.frame to branches for selection
+# comp_1 <- 1-c
+# comp_1 <- as.dist(comp_1)
+# #labels <- attr(comp_1, "Labels")
+# comp_2 <- ape::as.phylo(hclust(comp_1))
+# comp_2[["edge.length"]] <- comp_2[["edge.length"]]+1
+# comp_2[["edge.length"]]
+# # Create a rooted phylo object
+# phylo_tree <- as.phylo(comp_2)
+# # Save the tree with positive edge lengths
+# write.tree(comp_2, file = paste0(output_path_base, "-Sandelin-Wassermann.nwk"))
+# #################################################
+# c_pcm<-clusterMotifs(pcm, method = "Smith-Waterman") ### !!! TIME TO GET A COFFEEE !!! ###
+# hc<- c_pcm
+# motifs<-pcm[hc$order]
+# ##################################################
+# write.tree(as.phylo(c_pcm), file = paste0(output_path_base, "-Smith-Waterman.nwk"))
 
-#                               f.phylog = 0.3,
-                             #  cleaves = 1,
- #                              cnodes = 0,
-#                               labels.leaves = names(phylo_tree$leaves),
-#                               clabel.leaves = 1,
-#                               labels.nodes = names(phylo_tree$nodes),
-#                               clabel.nodes = 0,
-#                               font = "Helvetica-Bold",
-#                             #  ic.scale = TRUE
-#)
+# #par(cex = 0.2)##############################################################
+# #pdf("output3.pdf", width = 30, height = 40)
+# #plotMotifLogoStackWithTree(pcm, c_pcm,
+# #                           treewidth = 1/8,
+# #                           trueDist = TRUE)
+# #dev.off()
+# # Get the number of elements in pcm
+# num_elements <- length(pcm)
+# # Initialize an empty list to store filtered elements
+# pcm_filtered <- vector("list", length = num_elements)
+# # Loop through each element in pcm and filter
+# for (i in 1:num_elements) {
+#   if (!grepl("R_", pcm[[i]]@name)) {
+#     pcm_filtered[[i]] <- pcm[[i]]
+#   }
+# }
+# # Remove NULL elements (objects where @name contains "R_")
+# pcm_filtered <- pcm_filtered[!sapply(pcm_filtered, is.null)]
+# browseMotifs(
+#   pcm_filtered,
+#   layout = "cluster",
+#   nodeRadius = 5,
+#   baseHeight = 30,
+#   baseWidth = 12,
+#   xaxis = TRUE,
+#   width = 100,
+#   height = 1700
+# )
+# ##############################################################
 
-#plot(plot)
-#plotMotifLogoStackWithTree(pcm2,
-#                         pcm_hcNW,
-#                         treewidth= 1/4,
-#                         trueDist = TRUE,
-#                         ncex = 1)
-#library(grid)
-#grid.draw(plot)
+# #pcm2 <- pcm
+# #pcm2<- pcm2[!sapply(pcm2, function(x) grepl("R_", x$name))]
+# #sapply(pcm2, class)
+# #for (i in seq_along(pcm2)) {
+# #  pcm2[[i]]$name <- substr(pcm2[[i]]$name, 1, 23)
+# #}
+# #str(pcm2)
+# #pcm_hcNW <- clusterMotifs(pcm2, method = "Needleman-Wunsch")
+# #phylo_tree <- ade4::hclust2phylog(pcm_hcNW)
+# #phylo_tree <- as.phylo(pcm_hcNW)
+# #plot(as.dendrogram((phylo_tree)))
+# #plotMotifStackWithPhylog(phylo_tree, pcm2)
 
-###################################
+# #                               f.phylog = 0.3,
+#                              #  cleaves = 1,
+#  #                               cnodes = 0,
+# #                               labels.leaves = names(phylo_tree$leaves),
+# #                               clabel.leaves = 1,
+# #                               labels.nodes = names(phylo_tree$nodes),
+# #                               clabel.nodes = 0,
+# #                               font = "Helvetica-Bold",
+# #                             #  ic.scale = TRUE
+# #)
+
+# #plot(plot)
+# #plotMotifLogoStackWithTree(pcm2,
+# #                         pcm_hcNW,
+# #                         treewidth= 1/4,
+# #                         trueDist = TRUE,
+# #                         ncex = 1)
+# #library(grid)
+# #grid.draw(plot)
+
+# ###################################
