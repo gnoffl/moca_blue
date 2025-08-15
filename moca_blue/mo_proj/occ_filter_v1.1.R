@@ -12,9 +12,9 @@
 #mkdir occ$project
 #mv smallfile* occ$project/
 ############################################################# ITS WORKING !
-working_directory = "/home/ibg-4/Desktop/Rhome/moca_blue/mo_proj"
-file_paths = "../mapping/msr_arabidopsis/occurrences.txt"
-output_file <- "../out/SolyM014sols_e3-cwm_2023110"
+working_directory = "."
+file_paths = "moca_blue/out/ara_msr_max_corrected/mapped_motifs/occurrences.txt"
+output_file <- "moca_blue/out/ara_msr_max_corrected/filtered/ara_msr_max_corrected_filtered.tsv"
 dirpath <- "./occSolyM014sols_e3-cwm_20231110/"
 # file_paths  <- list.files(dirpath, pattern = "^smallfile*", full.names = TRUE)
 #############################################################
